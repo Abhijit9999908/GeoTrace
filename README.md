@@ -51,3 +51,39 @@ Built using Flask, SQLite, and OSINT techniques.
 ---
 
 ## 🧩 Project Structure
+GeoTrace/ │ ├── app.py              # Main Flask application ├── database.py         # SQLite database operations ├── threat_logic.py     # Domain classification logic ├── requirements.txt    # Python dependencies ├── templates/          # HTML files ├── static/             # CSS & JS files └── README.md
+
+
+📊 Threat Classification Logic
+GeoTrace assigns risk levels based on:
+- Suspicious TLD patterns
+- Keyword matching
+- Known malicious domain patterns
+- IP characteristics
+Threat Levels:
+- 🟢 Safe
+- 🟡 Suspicious
+- 🔴 High Risk
+
+
+
+🔐 Security Notice
+This project is developed for:
+Educational purposes
+Cybersecurity awareness
+OSINT learning
+It does NOT perform active attacks or intrusive scanning.
+
+
+
+👨‍💻 Author
+Abhijit Rathod
+Cybersecurity Enthusiast | Python Developer | OSINT Learner
+GitHub: https://github.com/Abhijit9999908�
+
+
+⭐ Future Improvements
+...
+
+📜 License
+This project is open-source and available under the MIT License.
