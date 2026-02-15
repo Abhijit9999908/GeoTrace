@@ -6,7 +6,7 @@ Routes:
   POST /analyze  → Resolve a domain, geolocate it, classify it, save & return JSON
   GET  /history  → Return all past analyses as JSON
 """
-
+import os
 import socket
 import requests
 from flask import Flask, render_template, request, jsonify
@@ -117,8 +117,6 @@ def history():
 # Run the app
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
-    # host="0.0.0.0" makes the server accessible on the local network
-    # debug=True enables auto-reload during development
-       app.run(host="0.0.0.0", port=5000) 
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 
