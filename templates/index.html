@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoTrace Elite</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Courier+Prime&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
@@ -21,9 +21,9 @@
     <main class="container">
         
         <section class="search-section">
-            <label for="domainInput" style="color: #ccc;">TARGET DOMAIN</label>
+            <label for="domainInput">TARGET DOMAIN</label>
             <div class="input-group">
-                <input type="text" id="domainInput" placeholder="Enter domain (e.g. google.com)...">
+                <input type="text" id="domainInput" placeholder="Enter domain (e.g. google.com)..." autocomplete="off">
                 <button class="btn" id="analyzeBtn">INITIATE SCAN</button>
             </div>
             <div id="statusMsg" class="status-msg"></div>
@@ -38,7 +38,7 @@
                 </div>
                 <div class="result-item">
                     <div class="label">IP Node</div>
-                    <div class="value" id="resIP">...</div>
+                    <div class="value mono" id="resIP">...</div>
                 </div>
                 <div class="result-item">
                     <div class="label">Origin</div>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="result-item">
                     <div class="label">Geo Coordinates</div>
-                    <div class="value" id="resCoords">...</div>
+                    <div class="value mono" id="resCoords">...</div>
                 </div>
                 <div class="result-item">
                     <div class="label">Threat Classification</div>
@@ -67,7 +67,7 @@
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>IP</th>
+                            <th>IP Address</th>
                             <th>Country</th>
                             <th>Threat</th>
                             <th>Time</th>
@@ -81,7 +81,8 @@
 
     </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
