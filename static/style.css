@@ -1,44 +1,236 @@
-/* Dark theme styles */
-/* General background and text color */
+/* ===================================================
+   GeoTrace – Unified Dark Theme Stylesheet
+   =================================================== */
+
+:root {
+    /* Color Palette */
+    --bg-primary:    #0f1117;
+    --bg-secondary:  #1a1d2e;
+    --bg-card:       #212537;
+    --text-primary:  #e4e6f0;
+    --text-secondary:#8b8fa3;
+    
+    /* Status & Accents */
+    --accent:        #6c63ff;
+    --accent-hover:  #5a52d9;
+    --safe:          #2ecc71;
+    --tracker:       #f1c40f;
+    --unknown:       #e74c3c;
+    
+    /* UI Elements */
+    --border:        #2a2e42;
+    --radius:        10px;
+    --shadow:        0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Reset & Base ── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    background-color: #121212;  /* Dark background */
-    color: #E0E0E0;  /* Light text for readability */
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
 }
 
-/* Header styles */
-header {
-    background-color: #1F1F1F;
-    padding: 20px;
+/* ── Header / Navbar ── */
+/* Linked to 'header' tag and '.header' class for compatibility */
+header, .header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Search section */
+header h1, .header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+header h1 span, .header h1 span {
+    color: var(--accent);
+}
+
+/* ── Main Container ── */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* ── Search Section ── */
 .search-section {
-    background-color: #1F1F1F;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
 }
 
-/* Result card */
+.search-section label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+    border-color: var(--accent);
+}
+
+/* ── Buttons ── */
+.btn {
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+}
+
+.btn:hover { background: var(--accent-hover); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Result Card ── */
 .result-card {
-    background-color: #232323;
-    border: 1px solid #444;
+    display: none; /* Controlled by JS via .visible class */
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
 }
 
-/* Map section */
-.map-section {
-    background-color: #1F1F1F;
+.result-card.visible {
+    display: block;
 }
 
-/* History section */
-.history-section {
-    background-color: #232323;
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
 }
 
-/* Badges */
+.result-item {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+}
+
+/* ── Badges (Threat Levels) ── */
 .badge {
-    background-color: #444;
-    color: #E0E0E0;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
-/* Responsive media queries */
+.badge.safe    { background: rgba(46,204,113,0.15); color: var(--safe); }
+.badge.tracker { background: rgba(241,196,15,0.15); color: var(--tracker); }
+.badge.unknown { background: rgba(231,76,60,0.15);  color: var(--unknown); }
+
+/* ── Map Section ── */
+.map-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+}
+
+#map {
+    height: 420px;
+    width: 100%;
+    background: var(--bg-secondary); /* Fallback */
+}
+
+/* ── History Table ── */
+.history-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    text-align: left;
+    padding: 12px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+
+tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+/* ── Animations ── */
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
-    /* Mobile styles */
+    .header { padding: 16px; }
+    .input-group { flex-direction: column; }
+    .result-grid { grid-template-columns: 1fr; }
+    #map { height: 300px; }
 }
