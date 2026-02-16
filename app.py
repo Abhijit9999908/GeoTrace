@@ -1,119 +1,99 @@
 """
-app.py — Main Flask application for GeoTrace
-
-Routes:
-  GET  /          → Serve the main dashboard page
-  POST /analyze   → Resolve a domain, geolocate it, classify it, save & return JSON
-  GET  /history   → Return all past analyses as JSON
+app.py — Main Flask application for GeoTrace (Pro Version)
 """
 import os
 import socket
 import requests
 from flask import Flask, render_template, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-# ── IMPORT CUSTOM MODULES (FIXED) ──
-# We must import ALL functions we use: init_db, save_analysis, AND get_history
+# Custom Modules
 from database import init_db, save_analysis, get_history
 from threat_logic import classify_domain
 
-# ── Create the Flask app ──
 app = Flask(__name__)
 
-# ── Initialize the database when the app starts ──
+# ── 🛡️ RATE LIMITING CONFIGURATION ──
+# This sets up the "Smart Limiting" to prevent abuse.
+# Default: 200 requests per day, 50 per hour.
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+# Initialize DB
 init_db()
 
+# ── Routes ──
 
-# ─────────────────────────────────────────────
-# Route 1: Serve the main HTML page
-# ─────────────────────────────────────────────
 @app.route("/")
 def index():
-    """Render the main dashboard page."""
     return render_template("index.html")
 
-
-# ─────────────────────────────────────────────
-# Route 2: Analyze a domain
-# ─────────────────────────────────────────────
 @app.route("/analyze", methods=["POST"])
+@limiter.limit("10 per minute")  # ⚡ LIMIT: Allow only 10 scans per minute per user
 def analyze():
-    """
-    Expects JSON body: { "domain": "example.com" }
-    """
-    # Get the domain from the request body
     data = request.get_json()
     domain = data.get("domain", "").strip()
 
-    # Validate input
     if not domain:
         return jsonify({"error": "Please enter a domain name."}), 400
 
-    # Remove protocol prefixes if the user accidentally includes them
+    # 1. Input Sanitization
     for prefix in ("http://", "https://", "www."):
         if domain.startswith(prefix):
             domain = domain[len(prefix):]
-
-    # Remove trailing slashes or paths
     domain = domain.split("/")[0]
 
-    # ── Step 1: Resolve domain to IP ──
+    # 2. DNS Resolution (Reliability Fix)
     try:
         ip_address = socket.gethostbyname(domain)
     except socket.gaierror:
-        return jsonify({"error": f"Could not resolve domain: {domain}"}), 400
+        return jsonify({"error": f"DNS Error: Could not resolve '{domain}'."}), 400
 
-    # ── Step 2: Fetch geolocation from ip-api.com ──
+    # 3. Geolocation (with Timeout for Reliability)
     try:
-        # Use http because the free tier of ip-api doesn't always support https
-        api_url = f"http://ip-api.com/json/{ip_address}"
-        response = requests.get(api_url, timeout=10)
+        # Using HTTP for ip-api (free tier)
+        response = requests.get(f"http://ip-api.com/json/{ip_address}", timeout=5)
         geo_data = response.json()
 
-        # Check if the API returned a failure
         if geo_data.get("status") == "fail":
-            return jsonify({"error": f"Geolocation failed: {geo_data.get('message', 'unknown error')}"}), 400
-
+            return jsonify({"error": f"GeoAPI Error: {geo_data.get('message')}"}), 400
+        
         country   = geo_data.get("country", "Unknown")
         latitude  = geo_data.get("lat", 0)
         longitude = geo_data.get("lon", 0)
 
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "GeoAPI timed out. Try again later."}), 503
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Network error while fetching geolocation: {str(e)}"}), 500
+        return jsonify({"error": "Network connection failed."}), 500
 
-    # ── Step 3: Classify threat level ──
+    # 4. Intelligence & Saving
     threat_level = classify_domain(domain)
-
-    # ── Step 4: Save to database ──
     save_analysis(domain, ip_address, country, latitude, longitude, threat_level)
 
-    # ── Step 5: Return the result ──
-    result = {
-        "domain":       domain,
-        "ip_address":   ip_address,
-        "country":      country,
-        "latitude":     latitude,
-        "longitude":    longitude,
-        "threat_level": threat_level,
-    }
+    return jsonify({
+        "domain": domain,
+        "ip_address": ip_address,
+        "country": country,
+        "latitude": latitude,
+        "longitude": longitude,
+        "threat_level": threat_level
+    })
 
-    return jsonify(result)
-
-
-# ─────────────────────────────────────────────
-# Route 3: Get analysis history
-# ─────────────────────────────────────────────
 @app.route("/history")
 def history():
-    """Return all stored analyses as a JSON array."""
-    # This was the cause of the crash! get_history() must be imported.
     return jsonify(get_history())
 
+# ── Error Handler for Rate Limit ──
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({"error": "⚠️ Rate limit exceeded. You are scanning too fast!"}), 429
 
-# ─────────────────────────────────────────────
-# Run the app
-# ─────────────────────────────────────────────
 if __name__ == "__main__":
-    # Render provides the PORT variable. Default to 10000 locally.
     port = int(os.environ.get("PORT", 10000))
-    # We bind to 0.0.0.0 so external services (like Render) can see the app
     app.run(host="0.0.0.0", port=port)
