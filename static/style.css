@@ -1,31 +1,225 @@
-/* Update these specific sections in your existing style.css */
+/* ===================================================
+   GeoTrace — Elite Dark Dashboard (v3.0)
+   =================================================== */
 
-/* Add this new variable for the new threat level */
 :root {
-    /* ... existing vars ... */
-    --suspicious: #e67e22; /* Orange */
+    --bg-main: #0a0c12;
+    --bg-glass: rgba(26, 29, 46, 0.8);
+    --bg-glass-heavy: rgba(33, 37, 55, 0.95);
+    --accent-glow: rgba(108, 99, 255, 0.4);
+    
+    --text-primary: #f0f2fa;
+    --text-muted: #9499b3;
+    
+    --accent: #6c63ff;
+    --safe: #2ecc71;
+    --tracker: #f1c40f;
+    --suspicious: #e67e22;
+    --unknown: #e74c3c;
+    
+    --blur: blur(12px);
+    --border: 1px solid rgba(255, 255, 255, 0.1);
+    --shadow-elite: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Update Badges */
-.badge.suspicious { 
-    background: rgba(230, 126, 34, 0.2); 
-    color: var(--suspicious); 
-    border: 1px solid var(--suspicious); 
+/* ── Base ── */
+body {
+    background: radial-gradient(circle at top right, #161929, var(--bg-main));
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
 }
 
-/* Make IP addresses look like code */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ── Header ── */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.header h1 {
+    font-size: 3rem;
+    margin: 0;
+    letter-spacing: -1px;
+}
+.header h1 span { color: var(--accent); }
+.header p { color: var(--text-muted); margin-top: 0.5rem; }
+
+/* ── Glassmorphic Panels ── */
+.search-section, .result-card, .map-section, .history-section {
+    background: var(--bg-glass) !important;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-elite);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* ── Smart Input & Button ── */
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.input-group input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 15px;
+    border-radius: 8px;
+    color: #ffffff !important;
+    font-size: 1.1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px var(--accent-glow);
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Placeholder color fix */
+::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+.btn {
+    background: linear-gradient(135deg, var(--accent), #4e44ff) !important;
+    color: white;
+    border: none;
+    padding: 0 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: transform 0.2s;
+}
+
+.btn:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    background: #444 !important;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Result Grid ── */
+.result-card h3, .map-section h3, .history-section h3 {
+    margin-top: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.result-item {
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.result-item .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.result-item .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
 .mono {
-    font-family: 'Courier New', monospace;
+    font-family: 'Courier Prime', monospace;
     letter-spacing: -0.5px;
     color: var(--accent);
 }
 
-/* Improved Status Message visibility */
-.status-msg.normal { color: var(--text-muted); }
-
-/* Mobile Responsiveness for Grid */
-@media (max-width: 768px) {
-    .result-grid {
-        grid-template-columns: 1fr; /* Stack items on phone */
-    }
+/* ── Badges ── */
+.badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
 }
+.badge.safe { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+.badge.tracker { background: rgba(241, 196, 15, 0.2); color: #f1c40f; border: 1px solid #f1c40f; }
+.badge.suspicious { background: rgba(230, 126, 34, 0.2); color: #e67e22; border: 1px solid #e67e22; }
+.badge.unknown { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+
+/* ── Map ── */
+#map {
+    height: 450px;
+    border-radius: 12px;
+    width: 100%;
+    z-index: 1;
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* ── History Table ── */
+.table-wrap {
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+th {
+    text-align: left;
+    padding: 12px;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+tr:hover td {
+    background: rgba(255,255,255,0.02);
+}
+.time {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Status Message ── */
+.status-msg {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    min-height: 20px;
+    transition: opacity 0.3s;
+}
+.status-msg.error { color: #ff6b6b; }
+.status-msg.success { color: #51cf66; }
