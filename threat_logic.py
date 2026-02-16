@@ -1,54 +1,34 @@
 """
-threat_logic.py — Simple rule-based threat classification for GeoTrace
-
-Classifies domains into three categories:
-  SAFE    (green)  – well-known trusted services
-  TRACKER (yellow) – domains associated with tracking/ads
-  UNKNOWN (red)    – everything else
+threat_logic.py — Intelligence Engine for GeoTrace
 """
 
-
-# Keywords that indicate a trusted, well-known service
-SAFE_KEYWORDS = [
-    "google", "microsoft", "github", "youtube", "apple",
-    "amazon", "cloudflare", "mozilla", "wikipedia", "stackoverflow",
-    "linkedin", "netflix", "dropbox", "ubuntu", "debian",
-]
-
-# Keywords that indicate tracking or advertising
+# Simple lists for demonstration. 
+# In a real final year project, you might query an external API like VirusTotal.
 TRACKER_KEYWORDS = [
-    "ads", "analytics", "track", "pixel", "adserver",
-    "doubleclick", "adservice", "metrics", "telemetry", "beacon",
+    "ad", "ads", "analytics", "pixel", "tracker", "telemetry", 
+    "doubleclick", "facebook", "googleadservices", "amazon-adsystem"
 ]
 
+SAFE_DOMAINS = [
+    "google.com", "github.com", "stackoverflow.com", "wikipedia.org", 
+    "python.org", "microsoft.com", "apple.com"
+]
 
 def classify_domain(domain):
     """
-    Classify a domain based on simple keyword matching.
-
-    How it works:
-      1. Convert the domain to lowercase for case-insensitive matching.
-      2. Check if any SAFE keyword appears anywhere in the domain → SAFE.
-      3. Check if any TRACKER keyword appears anywhere in the domain → TRACKER.
-      4. If neither matches → UNKNOWN.
-
-    Parameters:
-        domain (str): The domain name to classify.
-
-    Returns:
-        str: One of "SAFE", "TRACKER", or "UNKNOWN".
+    Analyzes the domain string to determine a threat level.
+    Returns: 'SAFE', 'TRACKER', or 'UNKNOWN'
     """
-    domain_lower = domain.lower()
+    domain = domain.lower()
 
-    # Step 1: Check for trusted keywords
-    for keyword in SAFE_KEYWORDS:
-        if keyword in domain_lower:
-            return "SAFE"
+    # Check for known safe domains
+    if domain in SAFE_DOMAINS or domain.endswith(".gov") or domain.endswith(".edu"):
+        return "SAFE"
 
-    # Step 2: Check for tracking keywords
+    # Check for tracking keywords
     for keyword in TRACKER_KEYWORDS:
-        if keyword in domain_lower:
+        if keyword in domain:
             return "TRACKER"
 
-    # Step 3: Default – we don't recognize this domain
+    # Default if no specific patterns match
     return "UNKNOWN"
