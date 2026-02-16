@@ -33,6 +33,21 @@ body {
     min-height: 100vh;
 }
 
+
+/* Mobile (default) */
+body { font-size: 14px; }
+
+/* Tablets */
+@media (min-width: 768px) { ... }
+
+/* Laptops/Desktops */
+@media (min-width: 1024px) { ... }
+
+/* Large Desktops */
+@media (min-width: 1920px) { ... }
+
+
+
 /* ── Header / Navbar ── */
 .header {
     background: var(--bg-secondary);
