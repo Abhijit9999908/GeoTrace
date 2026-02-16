@@ -1,236 +1,118 @@
 /* ===================================================
-   GeoTrace – Unified Dark Theme Stylesheet
+   GeoTrace — Elite Dark Dashboard (v2.0)
    =================================================== */
 
 :root {
-    /* Color Palette */
-    --bg-primary:    #0f1117;
-    --bg-secondary:  #1a1d2e;
-    --bg-card:       #212537;
-    --text-primary:  #e4e6f0;
-    --text-secondary:#8b8fa3;
+    --bg-main: #0a0c12;
+    --bg-glass: rgba(26, 29, 46, 0.7);
+    --bg-glass-heavy: rgba(33, 37, 55, 0.9);
+    --accent-glow: rgba(108, 99, 255, 0.4);
     
-    /* Status & Accents */
-    --accent:        #6c63ff;
-    --accent-hover:  #5a52d9;
-    --safe:          #2ecc71;
-    --tracker:       #f1c40f;
-    --unknown:       #e74c3c;
+    --text-primary: #f0f2faff;
+    --text-muted: #9499b3;
     
-    /* UI Elements */
-    --border:        #2a2e42;
-    --radius:        10px;
-    --shadow:        0 4px 24px rgba(0, 0, 0, 0.3);
+    --accent: #6c63ff;
+    --safe: #00f2fe; /* Cyber Green/Blue */
+    --tracker: #f9d423;
+    --unknown: #ff4b2b;
+    
+    --blur: blur(12px);
+    --border: 1px solid rgba(255, 255, 255, 0.08);
+    --shadow-elite: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* ── Reset & Base ── */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* ── Base ── */
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg-primary);
+    background: radial-gradient(circle at top right, #161929, var(--bg-main));
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: var(--text-primary);
-    line-height: 1.5;
-    min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* ── Header / Navbar ── */
-/* Linked to 'header' tag and '.header' class for compatibility */
-header, .header {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* ── Glassmorphic Panels ── */
+.search-section, .result-card, .map-section, .history-section {
+    background: var(--bg-glass) !important;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-elite);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-header h1, .header h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+.search-section:hover {
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
-header h1 span, .header h1 span {
-    color: var(--accent);
-}
-
-/* ── Main Container ── */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
-/* ── Search Section ── */
-.search-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow);
-}
-
-.search-section label {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.input-group {
-    display: flex;
-    gap: 12px;
-}
-
+/* ── Smart Input & Button ── */
 .input-group input {
-    flex: 1;
-    padding: 12px 16px;
-    font-size: 1rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-primary);
-    outline: none;
-    transition: border-color 0.2s;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.3s ease;
 }
 
 .input-group input:focus {
-    border-color: var(--accent);
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px var(--accent-glow);
 }
 
-/* ── Buttons ── */
 .btn {
-    padding: 12px 28px;
-    font-size: 1rem;
-    font-weight: 600;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    white-space: nowrap;
+    background: linear-gradient(135deg, var(--accent), #4e44ff) !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
 }
 
-.btn:hover { background: var(--accent-hover); }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
 
-/* ── Result Card ── */
+/* ── Animated Result Card ── */
 .result-card {
-    display: none; /* Controlled by JS via .visible class */
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(20px);
+    display: none;
 }
 
 .result-card.visible {
     display: block;
+    animation: slideUp 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.result-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
+@keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.result-item {
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-}
-
-/* ── Badges (Threat Levels) ── */
-.badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.badge.safe    { background: rgba(46,204,113,0.15); color: var(--safe); }
-.badge.tracker { background: rgba(241,196,15,0.15); color: var(--tracker); }
-.badge.unknown { background: rgba(231,76,60,0.15);  color: var(--unknown); }
-
-/* ── Map Section ── */
-.map-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow);
-}
-
+/* ── Custom Map Styles ── */
 #map {
-    height: 420px;
-    width: 100%;
-    background: var(--bg-secondary); /* Fallback */
+    height: 500px;
+    border-radius: 0 0 16px 16px;
+    filter: grayscale(1) invert(1) contrast(0.9); /* Dark Mode Map Effect */
 }
 
-/* ── History Table ── */
-.history-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow);
+/* ── History Table Enhancements ── */
+tbody tr {
+    transition: background 0.2s ease;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
+tbody tr:hover {
+    background: rgba(108, 99, 255, 0.1) !important;
 }
 
-thead th {
-    text-align: left;
-    padding: 12px;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
+/* ── Badge Glows ── */
+.badge.safe { box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+.badge.tracker { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+.badge.unknown { box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+
+/* ── Pulse Animation for Map Pins ── */
+.leaflet-interactive {
+    animation: markerPulse 2s infinite ease-in-out;
 }
 
-tbody td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-}
-
-/* ── Animations ── */
-.spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: inline-block;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    .header { padding: 16px; }
-    .input-group { flex-direction: column; }
-    .result-grid { grid-template-columns: 1fr; }
-    #map { height: 300px; }
+@keyframes markerPulse {
+    0% { stroke-width: 2; stroke-opacity: 1; }
+    50% { stroke-width: 6; stroke-opacity: 0.5; }
+    100% { stroke-width: 2; stroke-opacity: 1; }
 }
