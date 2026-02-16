@@ -2,16 +2,17 @@
 app.py — Main Flask application for GeoTrace
 
 Routes:
-  GET  /         → Serve the main dashboard page
-  POST /analyze  → Resolve a domain, geolocate it, classify it, save & return JSON
-  GET  /history  → Return all past analyses as JSON
+  GET  /          → Serve the main dashboard page
+  POST /analyze   → Resolve a domain, geolocate it, classify it, save & return JSON
+  GET  /history   → Return all past analyses as JSON
 """
 import os
 import socket
 import requests
 from flask import Flask, render_template, request, jsonify
 
-# Import our custom modules
+# ── IMPORT CUSTOM MODULES (FIXED) ──
+# We must import ALL functions we use: init_db, save_analysis, AND get_history
 from database import init_db, save_analysis, get_history
 from threat_logic import classify_domain
 
@@ -38,13 +39,6 @@ def index():
 def analyze():
     """
     Expects JSON body: { "domain": "example.com" }
-
-    Steps:
-      1. Resolve domain → IP address
-      2. Call ip-api.com for geolocation
-      3. Classify threat level
-      4. Save to database
-      5. Return result as JSON
     """
     # Get the domain from the request body
     data = request.get_json()
@@ -70,6 +64,7 @@ def analyze():
 
     # ── Step 2: Fetch geolocation from ip-api.com ──
     try:
+        # Use http because the free tier of ip-api doesn't always support https
         api_url = f"http://ip-api.com/json/{ip_address}"
         response = requests.get(api_url, timeout=10)
         geo_data = response.json()
@@ -110,6 +105,7 @@ def analyze():
 @app.route("/history")
 def history():
     """Return all stored analyses as a JSON array."""
+    # This was the cause of the crash! get_history() must be imported.
     return jsonify(get_history())
 
 
@@ -117,6 +113,7 @@ def history():
 # Run the app
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    # Render provides the PORT variable. Default to 10000 locally.
+    port = int(os.environ.get("PORT", 10000))
+    # We bind to 0.0.0.0 so external services (like Render) can see the app
     app.run(host="0.0.0.0", port=port)
-
