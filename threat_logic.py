@@ -1,34 +1,39 @@
 """
-threat_logic.py — Intelligence Engine for GeoTrace
+threat_logic.py — Enhanced Intelligence Engine
 """
 
-# Simple lists for demonstration. 
-# In a real final year project, you might query an external API like VirusTotal.
+# Keywords often found in tracking/ad domains
 TRACKER_KEYWORDS = [
     "ad", "ads", "analytics", "pixel", "tracker", "telemetry", 
-    "doubleclick", "facebook", "googleadservices", "amazon-adsystem"
+    "doubleclick", "facebook", "googleadservices", "amazon-adsystem",
+    "metrics", "stats", "click", "marketing"
+]
+
+# TLDs often used for spam or low-quality sites
+SUSPICIOUS_TLDS = [
+    ".xyz", ".top", ".gq", ".cn", ".ru", ".tk", ".fit", ".rest"
 ]
 
 SAFE_DOMAINS = [
     "google.com", "github.com", "stackoverflow.com", "wikipedia.org", 
-    "python.org", "microsoft.com", "apple.com"
+    "python.org", "microsoft.com", "apple.com", "youtube.com"
 ]
 
 def classify_domain(domain):
-    """
-    Analyzes the domain string to determine a threat level.
-    Returns: 'SAFE', 'TRACKER', or 'UNKNOWN'
-    """
     domain = domain.lower()
 
-    # Check for known safe domains
+    # 1. Check Safe List
     if domain in SAFE_DOMAINS or domain.endswith(".gov") or domain.endswith(".edu"):
         return "SAFE"
 
-    # Check for tracking keywords
+    # 2. Check Suspicious TLDs
+    for tld in SUSPICIOUS_TLDS:
+        if domain.endswith(tld):
+            return "SUSPICIOUS"
+
+    # 3. Check Tracker Keywords
     for keyword in TRACKER_KEYWORDS:
         if keyword in domain:
             return "TRACKER"
 
-    # Default if no specific patterns match
     return "UNKNOWN"
