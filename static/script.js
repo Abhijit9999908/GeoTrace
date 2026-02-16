@@ -1,24 +1,21 @@
 /**
- * script.js — GeoTrace Pro Logic (Fixed)
+ * script.js — GeoTrace Pro Logic (v3.0)
  */
 
 const map = L.map("map").setView([20, 0], 2);
+const markersLayer = L.layerGroup().addTo(map);
 
 L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: "GeoTrace",
+    attribution: "GeoTrace Pro",
     maxZoom: 19,
 }).addTo(map);
 
-const markersLayer = L.layerGroup().addTo(map);
-
-// DOM Elements
 const domainInput = document.getElementById("domainInput");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const statusMsg = document.getElementById("statusMsg");
 const resultCard = document.getElementById("resultCard");
 const historyBody = document.getElementById("historyBody");
 
-// Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
     analyzeBtn.addEventListener("click", analyzeDomain);
     loadHistory();
@@ -30,12 +27,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function analyzeDomain() {
     const domain = domainInput.value.trim();
-    if (!domain) return updateStatus("⚠️ Enter a domain name.", "error");
+    if (!domain) return updateStatus("⚠️ Please enter a domain.", "error");
 
-    // Reset UI
+    // UI Loading State
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = "SCANNING...";
-    updateStatus("📡 Interrogating global nodes...", "");
+    analyzeBtn.innerHTML = '<span class="spinner"></span> SCANNING...';
+    updateStatus("📡 Triangulating target...", "normal");
 
     try {
         const response = await fetch("/analyze", {
@@ -46,17 +43,24 @@ async function analyzeDomain() {
 
         const data = await response.json();
 
-        if (response.ok) {
-            updateStatus("✅ Target Acquired.", "success");
-            renderData(data);
-            updateMap(data);
-            loadHistory();
-        } else {
-            updateStatus(`❌ ${data.error}`, "error");
+        // Handle Errors (including Rate Limits)
+        if (!response.ok) {
+            if (response.status === 429) {
+                updateStatus("⚡ Rate Limit Hit. Please wait a moment.", "error");
+            } else {
+                updateStatus(`❌ ${data.error}`, "error");
+            }
+            return;
         }
+
+        // Success
+        updateStatus("✅ Target Acquired.", "success");
+        renderData(data);
+        updateMap(data);
+        loadHistory();
+
     } catch (err) {
-        console.error(err);
-        updateStatus("⚠️ Connection Error. Ensure server is running.", "error");
+        updateStatus("⚠️ Network Error. Server unreachable.", "error");
     } finally {
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = "INITIATE SCAN";
@@ -71,9 +75,11 @@ function renderData(data) {
     
     const badge = document.getElementById("resThreat");
     badge.textContent = data.threat_level;
-    badge.className = `badge ${data.threat_level.toLowerCase()}`;
+    
+    // Clear old classes and add new one
+    badge.className = "badge"; 
+    badge.classList.add(data.threat_level.toLowerCase());
 
-    // Make sure the result card is visible
     resultCard.style.display = "block";
 }
 
@@ -82,15 +88,31 @@ function updateMap(data) {
     const lat = data.latitude;
     const lon = data.longitude;
 
+    const colorMap = {
+        "SAFE": "#2ecc71",
+        "TRACKER": "#f1c40f",
+        "SUSPICIOUS": "#e67e22",
+        "UNKNOWN": "#e74c3c"
+    };
+
+    const color = colorMap[data.threat_level] || "#e74c3c";
+
     const marker = L.circleMarker([lat, lon], {
-        color: '#6c63ff',
-        fillColor: '#6c63ff',
+        color: color,
+        fillColor: color,
         fillOpacity: 0.8,
-        radius: 10
+        radius: 12
     }).addTo(markersLayer);
 
-    marker.bindPopup(`<b>${data.domain}</b><br>${data.country}`).openPopup();
-    map.flyTo([lat, lon], 13);
+    marker.bindPopup(`
+        <div style="text-align:center">
+            <b>${data.domain}</b><br>
+            ${data.ip_address}<br>
+            ${data.country}
+        </div>
+    `).openPopup();
+
+    map.flyTo([lat, lon], 13, { duration: 1.5 });
 }
 
 async function loadHistory() {
@@ -104,20 +126,22 @@ async function loadHistory() {
             const row = `
                 <tr>
                     <td><b>${item.domain}</b></td>
-                    <td>${item.ip_address}</td>
+                    <td class="mono">${item.ip_address}</td>
                     <td>${item.country}</td>
                     <td><span class="badge ${item.threat_level.toLowerCase()}">${item.threat_level}</span></td>
-                    <td style="color: #888; font-size: 0.85rem">${new Date(item.timestamp).toLocaleTimeString()}</td>
+                    <td class="time">${new Date(item.timestamp).toLocaleTimeString()}</td>
                 </tr>
             `;
             historyBody.insertAdjacentHTML('beforeend', row);
         });
     } catch (e) {
-        console.log("History load error", e);
+        console.error("History Error", e);
     }
 }
 
 function updateStatus(msg, type) {
     statusMsg.textContent = msg;
     statusMsg.className = `status-msg ${type}`;
+    // Clear message after 5 seconds if it's a success
+    if (type === "success") setTimeout(() => { statusMsg.textContent = ""; }, 5000);
 }
