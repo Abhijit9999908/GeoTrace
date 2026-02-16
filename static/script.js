@@ -5,7 +5,7 @@
 const map = L.map("map").setView([20, 0], 2);
 const markersLayer = L.layerGroup().addTo(map);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: "GeoTrace Pro",
     maxZoom: 19,
 }).addTo(map);
@@ -31,7 +31,7 @@ async function analyzeDomain() {
 
     // UI Loading State
     analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = '<span class="spinner"></span> SCANNING...';
+    analyzeBtn.innerHTML = 'SCANNING...';
     updateStatus("📡 Triangulating target...", "normal");
 
     try {
@@ -142,6 +142,5 @@ async function loadHistory() {
 function updateStatus(msg, type) {
     statusMsg.textContent = msg;
     statusMsg.className = `status-msg ${type}`;
-    // Clear message after 5 seconds if it's a success
     if (type === "success") setTimeout(() => { statusMsg.textContent = ""; }, 5000);
 }
