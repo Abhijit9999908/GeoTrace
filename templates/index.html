@@ -1,117 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-    <title>GeoTrace - Internet Footprint Visualizer</title>
-
-    <meta name="google-site-verification" content="DzSKQfa-o1Z_VIYMkD4HxMsAKMZXxiewgWVBDDznHt8" />
-    <!-- Leaflet.js CSS (free map library) -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""
-    />
-
-    <!-- Our custom stylesheet -->
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoTrace Elite</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-    <!-- ── Header ── -->
     <header class="header">
-        <div>
-            <h1>Geo<span>Trace</span></h1>
-        </div>
-        <p>Internet Footprint Visualizer</p>
+        <h1>Geo<span>Trace</span></h1>
+        <p>Cyber Intelligence & Footprint Visualizer</p>
     </header>
 
-    <!-- ── Main Content ── -->
     <main class="container">
-
-        <!-- Search / Input Section -->
+        
         <section class="search-section">
-            <label for="domainInput">Enter a domain name to analyze</label>
+            <label for="domainInput" style="color: #ccc;">TARGET DOMAIN</label>
             <div class="input-group">
-                <input
-                    type="text"
-                    id="domainInput"
-                    placeholder="e.g. google.com, github.com, ads.example.com"
-                    autocomplete="off"
-                />
-                <button class="btn" id="analyzeBtn">Analyze</button>
+                <input type="text" id="domainInput" placeholder="Enter domain (e.g. google.com)...">
+                <button class="btn" id="analyzeBtn">INITIATE SCAN</button>
             </div>
             <div id="statusMsg" class="status-msg"></div>
         </section>
 
-        <!-- Latest Result Card -->
-        <section id="resultCard" class="result-card">
-            <h3>Latest Analysis Result</h3>
+        <section id="resultCard" class="result-card" style="display: none;">
+            <h3>Scan Intelligence</h3>
             <div class="result-grid">
                 <div class="result-item">
-                    <div class="label">Domain</div>
-                    <div class="value" id="resDomain">—</div>
+                    <div class="label">Target Domain</div>
+                    <div class="value" id="resDomain">...</div>
                 </div>
                 <div class="result-item">
-                    <div class="label">IP Address</div>
-                    <div class="value" id="resIP">—</div>
+                    <div class="label">IP Node</div>
+                    <div class="value" id="resIP">...</div>
                 </div>
                 <div class="result-item">
-                    <div class="label">Country</div>
-                    <div class="value" id="resCountry">—</div>
+                    <div class="label">Origin</div>
+                    <div class="value" id="resCountry">...</div>
                 </div>
                 <div class="result-item">
-                    <div class="label">Coordinates</div>
-                    <div class="value" id="resCoords">—</div>
+                    <div class="label">Geo Coordinates</div>
+                    <div class="value" id="resCoords">...</div>
                 </div>
                 <div class="result-item">
-                    <div class="label">Threat Level</div>
-                    <div class="value"><span id="resThreat" class="badge">—</span></div>
+                    <div class="label">Threat Classification</div>
+                    <div class="value"><span id="resThreat" class="badge">...</span></div>
                 </div>
             </div>
         </section>
 
-        <!-- Map Section -->
         <section class="map-section">
-            <h3>World Map</h3>
+            <h3>Global Triangulation</h3>
             <div id="map"></div>
         </section>
 
-        <!-- History Table -->
         <section class="history-section">
-            <h3>Analysis History</h3>
+            <h3>Mission Logs</h3>
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>IP Address</th>
+                            <th>IP</th>
                             <th>Country</th>
-                            <th>Coordinates</th>
                             <th>Threat</th>
-                            <th>Timestamp</th>
+                            <th>Time</th>
                         </tr>
                     </thead>
                     <tbody id="historyBody">
-                        <tr class="empty-row">
-                            <td colspan="6">No analyses yet. Enter a domain above to get started.</td>
-                        </tr>
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </section>
 
     </main>
 
-    <!-- Leaflet.js library -->
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""
-    ></script>
-
-    <!-- Our custom JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/static/script.js"></script>
-
 </body>
 </html>
