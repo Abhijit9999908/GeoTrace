@@ -1,89 +1,112 @@
-"""
-app.py — Main Flask application for GeoTrace
-"""
-import os
 import socket
 import requests
 from flask import Flask, render_template, request, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-# ── CRITICAL FIX: Import get_history here! ──
-from database import init_db, save_analysis, get_history
-from threat_logic import classify_domain
+from database import init_db, save_result, get_history
+from threat_logic import classify_threat
 
 app = Flask(__name__)
 
-# ── Rate Limiting ──
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
-)
+GEOLOCATION_API = "http://ip-api.com/json/{ip}?fields=status,message,country,regionName,city,lat,lon,isp,org,as,query"
 
-init_db()
+
+def resolve_domain(domain: str):
+    """Resolve domain to IP address with error handling."""
+    try:
+        ip = socket.gethostbyname(domain.strip())
+        return ip, None
+    except socket.gaierror as e:
+        return None, f"Could not resolve domain: {str(e)}"
+
+
+def get_geo_info(ip: str):
+    """Fetch geolocation data for an IP address."""
+    try:
+        resp = requests.get(GEOLOCATION_API.format(ip=ip), timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("status") == "fail":
+            return None, data.get("message", "Geolocation lookup failed")
+        return data, None
+    except requests.RequestException as e:
+        return None, f"Geolocation API error: {str(e)}"
+
+
+def sanitize_domain(raw: str) -> str:
+    """Strip protocol and path, return bare hostname."""
+    domain = raw.strip().lower()
+    for prefix in ("https://", "http://", "ftp://"):
+        if domain.startswith(prefix):
+            domain = domain[len(prefix):]
+    domain = domain.split("/")[0].split("?")[0]
+    return domain
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/analyze", methods=["POST"])
-@limiter.limit("10 per minute")
 def analyze():
-    data = request.get_json()
-    domain = data.get("domain", "").strip()
+    data = request.get_json(silent=True) or {}
+    raw_domain = data.get("domain", "").strip()
 
-    if not domain:
-        return jsonify({"error": "Please enter a domain name."}), 400
+    if not raw_domain:
+        return jsonify({"error": "Domain is required."}), 400
 
-    # Clean domain
-    for prefix in ("http://", "https://", "www."):
-        if domain.startswith(prefix):
-            domain = domain[len(prefix):]
-    domain = domain.split("/")[0]
+    domain = sanitize_domain(raw_domain)
 
-    try:
-        ip_address = socket.gethostbyname(domain)
-    except socket.gaierror:
-        return jsonify({"error": f"DNS Error: Could not resolve '{domain}'."}), 400
+    if not domain or len(domain) < 3:
+        return jsonify({"error": "Invalid domain name."}), 400
 
-    try:
-        response = requests.get(f"http://ip-api.com/json/{ip_address}", timeout=5)
-        geo_data = response.json()
+    # Resolve IP
+    ip, err = resolve_domain(domain)
+    if err:
+        return jsonify({"error": err}), 422
 
-        if geo_data.get("status") == "fail":
-            return jsonify({"error": "GeoAPI Error"}), 400
-        
-        country   = geo_data.get("country", "Unknown")
-        latitude  = geo_data.get("lat", 0)
-        longitude = geo_data.get("lon", 0)
+    # Geolocation
+    geo, err = get_geo_info(ip)
+    if err:
+        return jsonify({"error": err}), 502
 
-    except Exception:
-        return jsonify({"error": "Network connection failed."}), 500
+    # Threat classification
+    threat_level, threat_score, threat_reasons = classify_threat(domain, ip, geo)
 
-    threat_level = classify_domain(domain)
-    save_analysis(domain, ip_address, country, latitude, longitude, threat_level)
-
-    return jsonify({
+    result = {
         "domain": domain,
-        "ip_address": ip_address,
-        "country": country,
-        "latitude": latitude,
-        "longitude": longitude,
-        "threat_level": threat_level
-    })
+        "ip": ip,
+        "country": geo.get("country", "Unknown"),
+        "region": geo.get("regionName", "Unknown"),
+        "city": geo.get("city", "Unknown"),
+        "lat": geo.get("lat"),
+        "lon": geo.get("lon"),
+        "isp": geo.get("isp", "Unknown"),
+        "org": geo.get("org", "Unknown"),
+        "threat_level": threat_level,
+        "threat_score": threat_score,
+        "threat_reasons": threat_reasons,
+    }
+
+    save_result(result)
+
+    return jsonify(result)
+
 
 @app.route("/history")
 def history():
-    # This line crashed the app before because get_history wasn't imported
-    return jsonify(get_history())
+    limit = request.args.get("limit", 50, type=int)
+    rows = get_history(limit)
+    return jsonify(rows)
 
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    return jsonify({"error": "⚠️ Rate limit exceeded."}), 429
+
+@app.route("/history/clear", methods=["DELETE"])
+def clear_history():
+    from database import clear_all
+    clear_all()
+    return jsonify({"message": "History cleared."})
+
 
 if __name__ == "__main__":
-    # Render requires binding to 0.0.0.0
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    init_db()
+    app.run(debug=False, host="0.0.0.0", port=5000)
+        
