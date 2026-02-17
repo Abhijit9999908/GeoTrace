@@ -1,137 +1,108 @@
 """
-threat_logic.py – Domain and IP threat classification for GeoTrace.
+threat_logic.py – Domain threat classification for GeoTrace.
 
-Scoring is additive; each rule contributes points up to a maximum of 100.
+ALWAYS returns a tuple of exactly 3 values:
+    (level: str, score: int, reasons: list[str])
+
 Levels:
-  0–29  → SAFE
- 30–59  → SUSPICIOUS
- 60–100 → HIGH RISK
+    0-29  → SAFE
+    30-59 → SUSPICIOUS
+    60+   → HIGH RISK
 """
 
-from __future__ import annotations
 import re
 
-# ── TLD lists ──────────────────────────────────────────────────────────────
 SUSPICIOUS_TLDS = {
     ".xyz", ".top", ".click", ".link", ".gq", ".ml", ".cf", ".ga",
-    ".tk", ".pw", ".rest", ".fun", ".icu", ".cyou", ".monster",
+    ".tk", ".pw", ".fun", ".icu", ".monster", ".cyou", ".rest",
 }
 SAFE_TLDS = {".gov", ".edu", ".mil"}
 
-# ── Keyword patterns ───────────────────────────────────────────────────────
-HIGH_RISK_PATTERNS = [
+RISKY_PATTERNS = [
     r"free.?gift", r"click.?here", r"urgent", r"verify.?account",
-    r"confirm.?identity", r"paypal.?secure", r"bank.?update",
-    r"signin.?secure", r"update.?info", r"win.?prize", r"\bmalware\b",
-    r"phish", r"\bransomware\b",
+    r"paypal.?secure", r"bank.?update", r"signin.?secure",
+    r"win.?prize", r"malware", r"phish", r"ransomware",
 ]
 SUSPICIOUS_KEYWORDS = [
-    "login", "secure", "account", "wallet", "crypto", "payment",
-    "invoice", "support", "helpdesk", "portal", "download", "free",
+    "login", "secure", "account", "wallet", "crypto",
+    "payment", "invoice", "support", "helpdesk", "download",
+    "free", "portal",
 ]
-
-# ── High-risk countries (example subset for demo purposes) ─────────────────
-HIGH_RISK_COUNTRIES = {
-    "North Korea", "Iran",
-}
-
-SUSPICIOUS_COUNTRIES = {
-    "Russia", "China", "Belarus", "Myanmar",
-}
-
-# Known bulletproof/shady ASNs (partial list for demo)
-SUSPICIOUS_AS_PREFIXES = [
-    "AS49367", "AS57523", "AS3462", "AS16276",  # OVH (often abused)
-]
+HIGH_RISK_COUNTRIES = {"North Korea", "Iran"}
+SUSPICIOUS_COUNTRIES = {"Russia", "China", "Belarus"}
 
 
-def _extract_tld(domain: str) -> str:
-    parts = domain.rstrip(".").split(".")
-    return f".{parts[-1]}" if parts else ""
-
-
-def _has_excessive_subdomains(domain: str) -> bool:
-    return domain.count(".") >= 4
-
-
-def _looks_like_idn_homograph(domain: str) -> bool:
-    """Very simple check for punycode / homograph spoofing."""
-    return "xn--" in domain
-
-
-def _is_ip_literal(domain: str) -> bool:
-    return bool(re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", domain))
-
-
-def classify_threat(
-    domain: str,
-    ip: str,
-    geo: dict,
-) -> tuple[str, int, list[str]]:
+def classify_threat(domain: str, ip: str, geo: dict):
     """
     Returns (level, score, reasons).
-    level  – 'SAFE' | 'SUSPICIOUS' | 'HIGH RISK'
-    score  – 0-100
-    reasons – human-readable list of findings
+    This function NEVER raises — always returns a valid 3-tuple.
     """
+    try:
+        return _classify(domain, ip, geo)
+    except Exception as e:
+        return "UNKNOWN", 0, [f"Classification error: {e}"]
+
+
+def _classify(domain: str, ip: str, geo: dict):
     score = 0
-    reasons: list[str] = []
+    reasons = []
 
-    tld = _extract_tld(domain)
-    country = geo.get("country", "")
-    asn = geo.get("as", "")
+    domain_lower = (domain or "").lower()
+    country = (geo or {}).get("country", "")
+    asn = (geo or {}).get("as", "")
 
-    # ── Safe bonuses (reduce score) ──────────────────────────────────────
+    # Extract TLD
+    parts = domain_lower.rstrip(".").split(".")
+    tld = f".{parts[-1]}" if len(parts) > 1 else ""
+
+    # Safe TLD bonus
     if tld in SAFE_TLDS:
-        score -= 15
-        reasons.append(f"Trusted TLD ({tld})")
+        score -= 20
+        reasons.append(f"Trusted TLD ({tld}) — low risk indicator")
 
-    # ── TLD risk ─────────────────────────────────────────────────────────
+    # Risky TLD
     if tld in SUSPICIOUS_TLDS:
         score += 25
         reasons.append(f"High-risk TLD: {tld}")
 
-    # ── Keyword matching ─────────────────────────────────────────────────
-    domain_lower = domain.lower()
-    for pattern in HIGH_RISK_PATTERNS:
+    # High-risk patterns
+    for pattern in RISKY_PATTERNS:
         if re.search(pattern, domain_lower):
             score += 30
-            reasons.append(f"Matches high-risk pattern: '{pattern}'")
+            reasons.append(f"Matches high-risk pattern: {pattern}")
             break
 
-    kw_hits = [kw for kw in SUSPICIOUS_KEYWORDS if kw in domain_lower]
-    if len(kw_hits) >= 2:
+    # Keyword hits
+    hits = [kw for kw in SUSPICIOUS_KEYWORDS if kw in domain_lower]
+    if len(hits) >= 2:
         score += 15
-        reasons.append(f"Multiple suspicious keywords: {', '.join(kw_hits)}")
-    elif kw_hits:
+        reasons.append(f"Multiple suspicious keywords found: {', '.join(hits[:4])}")
+    elif len(hits) == 1:
         score += 8
-        reasons.append(f"Suspicious keyword: {kw_hits[0]}")
+        reasons.append(f"Suspicious keyword detected: {hits[0]}")
 
-    # ── Subdomain depth ──────────────────────────────────────────────────
-    if _has_excessive_subdomains(domain):
+    # Subdomain depth
+    if domain_lower.count(".") >= 4:
         score += 10
-        reasons.append("Excessive subdomain depth (≥4 labels)")
+        reasons.append("Excessive subdomain depth (4+ levels)")
 
-    # ── Homograph / IDN ─────────────────────────────────────────────────
-    if _looks_like_idn_homograph(domain):
+    # IDN / punycode homograph
+    if "xn--" in domain_lower:
         score += 20
         reasons.append("Possible IDN homograph attack (punycode detected)")
 
-    # ── IP literal as domain ─────────────────────────────────────────────
-    if _is_ip_literal(domain):
+    # Raw IP as domain
+    if re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", domain_lower):
         score += 15
-        reasons.append("Domain is a raw IP address (no hostname)")
+        reasons.append("Domain is a raw IP address — no hostname")
 
-    # ── Domain length ────────────────────────────────────────────────────
-    hostname = domain.split(".")[0]
+    # Long hostname
+    hostname = parts[0] if parts else ""
     if len(hostname) > 30:
         score += 10
         reasons.append(f"Unusually long hostname ({len(hostname)} chars)")
-    if re.search(r"\d{4,}", hostname):
-        score += 5
-        reasons.append("Long numeric sequence in hostname")
 
-    # ── Geolocation risk ────────────────────────────────────────────────
+    # Country risk
     if country in HIGH_RISK_COUNTRIES:
         score += 35
         reasons.append(f"Hosted in high-risk country: {country}")
@@ -139,20 +110,13 @@ def classify_threat(
         score += 15
         reasons.append(f"Hosted in flagged country: {country}")
 
-    # ── ASN / ISP risk ───────────────────────────────────────────────────
-    for prefix in SUSPICIOUS_AS_PREFIXES:
-        if asn.startswith(prefix):
-            score += 10
-            reasons.append(f"Hosted on potentially abused network: {asn}")
-            break
-
-    # ── Private / loopback IP ────────────────────────────────────────────
-    if ip.startswith(("10.", "192.168.", "172.16.", "127.")):
+    # Private/loopback IP
+    if ip and ip.startswith(("10.", "192.168.", "127.", "172.16.")):
         score += 5
-        reasons.append("Resolves to private/loopback IP")
+        reasons.append("Resolves to private or loopback IP address")
 
-    # ── Clamp ────────────────────────────────────────────────────────────
-    score = max(0, min(score, 100))
+    # Clamp 0-100
+    score = max(0, min(100, score))
 
     if score >= 60:
         level = "HIGH RISK"
@@ -162,7 +126,6 @@ def classify_threat(
         level = "SAFE"
 
     if not reasons:
-        reasons.append("No significant threat indicators found.")
+        reasons.append("No significant threat indicators detected.")
 
     return level, score, reasons
-                
