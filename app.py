@@ -6,6 +6,9 @@ from threat_logic import classify_threat
 
 app = Flask(__name__)
 
+# ── Initialize DB on startup (works with both `python app.py` AND gunicorn) ──
+init_db()
+
 GEOLOCATION_API = "http://ip-api.com/json/{ip}?fields=status,message,country,regionName,city,lat,lon,isp,org,as,query"
 
 
@@ -107,6 +110,5 @@ def clear_history():
 
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=False, host="0.0.0.0", port=5000)
-        
+    
